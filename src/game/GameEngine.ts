@@ -8,6 +8,15 @@ import {
   SNAKE_PATTERNS,
 } from './constants'
 import type { GameData, Camera, LeaderboardEntry, Snake, BoostPellet } from './types'
+
+// Flutter Bridge type definition
+declare global {
+  interface Window {
+    FlutterBridge?: {
+      postMessage: (message: string) => void
+    }
+  }
+}
 import { createSnake, updateSnake, growSnake, drawSnake, checkSnakeCollision } from './Snake'
 import {
   spawnInitialFood,
@@ -183,6 +192,15 @@ export function updateGame(gameData: GameData, dt: number, time: number): GameDa
       if (finalScore > highScore) {
         highScore = finalScore
         localStorage.setItem('slitherHighScore', highScore.toString())
+      }
+
+      // Notify Flutter app about game end
+      if (window.FlutterBridge) {
+        window.FlutterBridge.postMessage(JSON.stringify({
+          event: 'gameEnd',
+          score: finalScore,
+          highScore: highScore
+        }))
       }
 
       return {
