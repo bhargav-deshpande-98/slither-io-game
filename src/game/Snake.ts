@@ -10,7 +10,8 @@ import {
   WORLD_SIZE,
   SNAKE_PATTERNS,
 } from './constants'
-import type { Snake, Segment, Camera, BoostPellet, SnakePattern } from './types'
+import type { Snake, Segment, Camera, BoostPellet } from './types'
+import type { SnakePattern } from './constants'
 
 let snakeIdCounter = 0
 let pelletIdCounter = 0

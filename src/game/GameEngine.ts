@@ -88,13 +88,13 @@ export function updateGame(gameData: GameData, dt: number, time: number): GameDa
   }
 
   let data = { ...gameData }
-  let player = { ...data.player }
-  let aiSnakes = [...data.aiSnakes]
+  let player: Snake = { ...data.player! }
+  let aiSnakes: Snake[] = data.aiSnakes.map(snake => ({ ...snake }))
   let food = [...data.food]
   let boostPellets = [...data.boostPellets]
 
   // Update player direction based on mouse
-  const head = player.segments[0]
+  const head = player.segments![0]
   player.targetAngle = Math.atan2(data.mouseY - head.y, data.mouseX - head.x)
 
   // Update player
@@ -120,7 +120,7 @@ export function updateGame(gameData: GameData, dt: number, time: number): GameDa
   boostPellets = updateBoostPellets(boostPellets)
 
   // Player eats food
-  const playerHead = player.segments[0]
+  const playerHead = player.segments![0]
   let foodEaten = 0
   food = food.filter(f => {
     if (checkFoodCollision(playerHead, f)) {
@@ -178,7 +178,7 @@ export function updateGame(gameData: GameData, dt: number, time: number): GameDa
       const deathFood = createDeathFood(player)
       food = [...food, ...deathFood]
 
-      const finalScore = player.segments.length
+      const finalScore = player.segments!.length
       let highScore = data.highScore
       if (finalScore > highScore) {
         highScore = finalScore
@@ -188,7 +188,7 @@ export function updateGame(gameData: GameData, dt: number, time: number): GameDa
       return {
         ...data,
         gameState: 'gameover',
-        player: { ...player, isAlive: false },
+        player: { ...player, isAlive: false } as Snake,
         aiSnakes,
         food,
         boostPellets,
@@ -244,8 +244,8 @@ export function updateGame(gameData: GameData, dt: number, time: number): GameDa
   }
 
   // Update camera
-  const playerCenter = player.segments[0]
-  const targetZoom = Math.max(0.5, Math.min(1, 30 / Math.sqrt(player.segments.length)))
+  const playerCenter = player.segments![0]
+  const targetZoom = Math.max(0.5, Math.min(1, 30 / Math.sqrt(player.segments!.length)))
   
   data.camera = {
     x: data.camera.x + (playerCenter.x - data.camera.x) * 0.08,
@@ -262,7 +262,7 @@ export function updateGame(gameData: GameData, dt: number, time: number): GameDa
     aiSnakes,
     food,
     boostPellets,
-    score: player.segments.length,
+    score: player.segments!.length,
     leaderboard,
   }
 }
