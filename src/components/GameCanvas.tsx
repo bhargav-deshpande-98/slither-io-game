@@ -12,6 +12,7 @@ import {
 import StartScreen from './StartScreen'
 import GameOverScreen from './GameOverScreen'
 import GameUI from './GameUI'
+import { initAudio, playEatSound, playKillSound, playBoostStartSound, playBoostEndSound, playDeathSound } from '@/lib/sounds'
 
 export default function GameCanvas() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -31,6 +32,7 @@ export default function GameCanvas() {
     const params = new URLSearchParams(window.location.search)
     const nickname = params.get('nickname')
     if (nickname) {
+      initAudio()
       const newGame = startGame(initialData, nickname)
       setGameData(newGame)
       gameDataRef.current = newGame
@@ -44,6 +46,7 @@ export default function GameCanvas() {
 
   const handleStart = useCallback((name: string) => {
     if (!gameDataRef.current) return
+    initAudio()
     const newGame = startGame(gameDataRef.current, name)
     setGameData(newGame)
     gameDataRef.current = newGame
@@ -61,6 +64,8 @@ export default function GameCanvas() {
 
   const handleBoost = useCallback((boosting: boolean) => {
     if (!gameDataRef.current) return
+    if (boosting) playBoostStartSound()
+    else playBoostEndSound()
     const updated = setPlayerBoosting(gameDataRef.current, boosting)
     setGameData(updated)
     gameDataRef.current = updated
@@ -77,9 +82,30 @@ export default function GameCanvas() {
     (dt: number, time: number) => {
       if (!gameDataRef.current || !canvasRef.current) return
 
-      const updated = updateGame(gameDataRef.current, dt, time)
+      const prev = gameDataRef.current
+      const updated = updateGame(prev, dt, time)
 
-      if (updated !== gameDataRef.current) {
+      if (updated !== prev) {
+        // Detect game events by comparing state
+        if (prev.player && updated.player && updated.player.isAlive) {
+          // Player grew (ate food or boost pellets)
+          if (updated.score > prev.score) {
+            // Check if player killed an AI snake (AI alive count decreased)
+            const prevAlive = prev.aiSnakes.filter(s => s.isAlive).length
+            const newAlive = updated.aiSnakes.filter(s => s.isAlive).length
+            if (newAlive < prevAlive) {
+              playKillSound()
+            } else {
+              playEatSound()
+            }
+          }
+        }
+
+        // Player died
+        if (prev.gameState === 'playing' && updated.gameState === 'gameover') {
+          playDeathSound()
+        }
+
         setGameData(updated)
         gameDataRef.current = updated
       }
@@ -95,6 +121,7 @@ export default function GameCanvas() {
   useGameLoop(gameLoopCallback, gameData?.gameState === 'playing')
 
   const handleRestart = useCallback(() => {
+    initAudio()
     const newGame = startGame(initializeGame(), playerName)
     setGameData(newGame)
     gameDataRef.current = newGame
